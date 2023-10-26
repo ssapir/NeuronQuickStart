@@ -54,7 +54,7 @@ class NeuronCell:
     def __init__(self,
                  is_init_trunk_oblique=False,
                  is_delete_axon=False,
-                 use_cvode=False, model_path="./L5PC_NEURON_simulation",
+                 use_cvode=False, model_path="./L5PC_Mouse_model_example",
                  templateName='L5PCtemplate',
                  name="L5PC_Mouse_model_example",
                  morphologyFilename=os.path.join("morphologies", "cell1.ASC"),
@@ -70,7 +70,7 @@ class NeuronCell:
 
         self.L5PC = None  # model from template
 
-        # current clamp, vectors & parameters
+        # Current clamp, vectors & parameters
         self.icl = None
         self.alpha_current_vec = None
         self.alpha_time_vec = None
@@ -79,8 +79,8 @@ class NeuronCell:
         self.__load_mechanisms(model_path)
 
         morphologyFilename = self.__load_morphology(biophysicalModelFilename,
-                                                  biophysicalModelTemplateFilename, model_path,
-                                                  morphologyFilename, templateName)
+                                                    biophysicalModelTemplateFilename, model_path,
+                                                    morphologyFilename, templateName)
         self.name = name
 
         if is_delete_axon:  # can cause internal neuron failure in some cases without deletion
@@ -88,7 +88,7 @@ class NeuronCell:
             logging.info("Done delete axon")
 
         self.markers = self.__get_markers(os.path.join(model_path, morphologyFilename))
-        logging.info("Done get_markers")
+        logging.info(f"Done get_markers: {np.unique([c.keys() for c in self.markers])}")
 
         if is_init_trunk_oblique:
             # default. Should match the cell morph from trial and error
@@ -97,13 +97,11 @@ class NeuronCell:
             logging.info("Set trunk oblique")
             self.__set_trunk_oblique_from_morph(diam_diff_threshold_um=diam_diff_threshold_um, stop_trunk_at=stop_trunk_at)
 
-        cvode = h.CVode()
         if use_cvode:
-            cvode.active(1)
-
-        logging.info("Done calc segments")
+            h.CVode().active(1)
 
         # todo add passive/active parameters?
+
         print("Done __init__")
 
     def nearest_segment_to_marker_coords(self, marker_dict):
@@ -120,7 +118,15 @@ class NeuronCell:
                 sec_x = distances.argmin() / len(x_path)
         return closest_sec(sec_x), dist
 
-    def add_current_stim(self, seg, delay_ms=200, dur_from_delay_ms=400, amp_ns=0.1, tau0=10, tau1=15):
+    def add_current_stim(self, seg, delay_ms=200, dur_from_delay_ms=400, amp_ns=0.1):
+        """
+
+        :param seg: segment to stimulation location
+        :param delay_ms: let model stabilize before simulating (at least 100ms)
+        :param dur_from_delay_ms:
+        :param amp_ns:
+        :return:
+        """
         if self.icl is not None:
             del self.icl
         self.icl = h.IClamp(seg.x, sec=seg.sec)
@@ -130,11 +136,21 @@ class NeuronCell:
 
     @staticmethod
     def __alpha_stim(delay_ms=200, dur_from_delay_ms=400, amp_ns=0.1, tau0=10, tau1=15, dt=0.1):
+        """ Create time & current vectors of alpha shape with following parameters
+
+        :param delay_ms: start shape from certain delay
+        :param dur_from_delay_ms:
+        :param amp_ns:
+        :param tau0:
+        :param tau1:
+        :param dt:
+        :return:
+        """
         time = np.arange(0, delay_ms + dur_from_delay_ms, dt)
         time_for_exp = np.arange(0, dur_from_delay_ms, dt)
         current_vec = np.zeros(time.shape)
         from_t = int(np.round(delay_ms/dt))
-        current_vec[from_t:] = amp_ns * ((1-np.exp(-(time_for_exp)/tau0))-(1-np.exp(-time_for_exp/tau1)))
+        current_vec[from_t:] = amp_ns * ((1 - np.exp(-time_for_exp / tau0)) - (1 - np.exp(-time_for_exp / tau1)))
         return time, current_vec
 
     def add_alpha_current_stim(self, seg, delay_ms=200, dur_from_delay_ms=400, amp_ns=0.1, tau0=5, tau1=8):
@@ -142,7 +158,7 @@ class NeuronCell:
             del self.icl
 
         time, current = self.__alpha_stim(delay_ms=delay_ms, dur_from_delay_ms=dur_from_delay_ms, amp_ns=amp_ns,
-                                        tau0=tau0, tau1=tau1, dt=h.dt)
+                                          tau0=tau0, tau1=tau1, dt=h.dt)
         self.icl = h.IClamp(seg.x, sec=seg.sec)
         self.icl.dur = 1e4  # ms
         self.alpha_current_vec = h.Vector(current)
@@ -158,12 +174,14 @@ class NeuronCell:
                 seg.pas.e = 0
 
     @staticmethod
-    def sec_to_type_name(sec, map_name={'apic': 'apical', 'dend': 'basal', 'axon': 'axonal', 'soma': 'soma'}):
+    def sec_to_type_name(sec, map_name=None):
+        if map_name is None:
+            map_name = {'apic': 'apical', 'dend': 'basal', 'axon': 'axonal', 'soma': 'soma'}
         curr_name = sec.name().split(".")[1].split("[")[0].replace("]", "")
         return map_name.get(curr_name, curr_name)
 
     @staticmethod
-    def get_impedance(x_sec, input_electrode_sec, freq_hz=0):
+    def calculate_impedance_Rin_Rtr(x_sec, input_electrode_sec, freq_hz=0):
         imp = h.Impedance()
         imp.loc(input_electrode_sec.x, sec=input_electrode_sec.sec)  # location of input electrode (middle of section).
         imp.compute(freq_hz)
@@ -173,7 +191,6 @@ class NeuronCell:
         h.distance(0, 0.5, sec=self.soma)
 
         for sec in self.all:
-            print(sec, RA, RM)
             sec.Ra = RA  # Ohm-cm
             sec.cm = CM  # uF/cm^2
             sec.g_pas = 1.0 / RM  # RM: Ohm-cm^2
@@ -200,45 +217,35 @@ class NeuronCell:
                           morphologyFilename, templateName):
         if biophysicalModelFilename is not None:
             if os.path.isfile(os.path.join(model_path, biophysicalModelFilename)):
-                h.load_file(os.path.join(model_path, biophysicalModelFilename))
+                h.load_file(os.path.join(model_path + "/", biophysicalModelFilename))
             else:
                 logging.error("Missing biophysics file {0}".format(os.path.join(model_path, biophysicalModelFilename)))
         if not os.path.isfile(os.path.join(model_path, biophysicalModelTemplateFilename)):
             raise Exception(
                 "Missing model template {0}".format(os.path.join(model_path, biophysicalModelTemplateFilename)))
         if hasattr(h, templateName):
-            pass
+            return
             # delattr(h, templateName)
         if morphologyFilename.startswith("/"):
             morphologyFilename = morphologyFilename[1:]
-        h.load_file(os.path.join(model_path, biophysicalModelTemplateFilename))
+        h.load_file(os.path.join(model_path + "/", biophysicalModelTemplateFilename))
         logging.info("Loading {0}".format(os.path.join(model_path, morphologyFilename)))
         cell_temp_func = getattr(h, templateName)  # todo can be automatic in the template as cell?
-        # self.L5PC = h.L5PCtemplate(os.path.join(model_path, morphologyFilename))
         self.L5PC = cell_temp_func(os.path.join(model_path, morphologyFilename))
         logging.info("Loaded {0}".format(morphologyFilename))
-        # todo needed?
-        # self.morphologyFilename = morphologyFilename
-        # self.fullMorphologyFilename = os.path.join(model_path, morphologyFilename)
-        # self.model_path = os.path.join(model_path, "mods")
         return morphologyFilename
 
     def __load_mechanisms(self, model_path):
+        self.mods_dll = None
         if os.path.isfile(os.path.join(model_path, "x86_64", "libnrnmech.so")):
             self.mods_dll = os.path.join(model_path, "x86_64", "libnrnmech.so")
         elif os.path.isfile(os.path.join(model_path, "nrnmech.dll")):
             self.mods_dll = os.path.join(model_path, "nrnmech.dll")
-        if not "CaDynamics_E2" in dir(h):
-            if os.path.isfile(os.path.join(model_path, "x86_64", "libnrnmech.so")):
-                h.nrn_load_dll(os.path.join(model_path, "x86_64", "libnrnmech.so"))
-                self.mods_dll = os.path.join(model_path, "x86_64", "libnrnmech.so")
-                logging.info(f"Loaded {os.path.join(model_path, 'x86_64', 'libnrnmech.so')}")
-            elif os.path.isfile(os.path.join(model_path, "nrnmech.dll")):
-                h.nrn_load_dll(os.path.join(model_path, "nrnmech.dll"))
-                self.mods_dll = os.path.join(model_path, "nrnmech.dll")
-                logging.info(f"Loaded {os.path.join(model_path, 'nrnmech.dll')}")
-            else:
-                logging.error("Missing dll/so mechanisms")
+        else:
+            logging.error("Missing dll/so mechanisms")
+        if "CaDynamics_E2" not in dir(h) and self.mods_dll is not None:
+            h.nrn_load_dll(self.mods_dll)
+            logging.info(f"Loaded {self.mods_dll}")
 
     @staticmethod
     def __get_markers(morph_full_path):
@@ -251,7 +258,6 @@ class NeuronCell:
             return dict([(k, getattr(cls, k)) for k in dir(cls) if not k.startswith("__")])
         curr_cell_data = Morphology(morph_full_path)
         return [to_dict(marker) for marker in curr_cell_data.markers]
-
 
     def __set_trunk_oblique_from_morph(self, diam_diff_threshold_um=0.2, stop_trunk_at=None):
         """For clear tree like shape we can use morph to split apical
@@ -315,8 +321,8 @@ class NeuronCell:
                 spine_psds.append(sp_head_psd)
                 spines.append(sp_neck)  # 2j
                 spines.append(sp_head)  # 2j + 1
-                sp_head_psd.connect(sp_head(1), 0)  # todo direction ok?
-                sp_head.connect(sp_neck(1), 0)  # todo direction ok?
+                sp_head_psd.connect(sp_head(1), 0)
+                sp_head.connect(sp_neck(1), 0)
                 sp_neck.connect(sec(shaft_x), 0)
                 print(sp_head(1), " connect to begin of ", sp_head_psd, " with diam ", sp_head_psd.diam, " length ",
                       sp_head_psd.L)
