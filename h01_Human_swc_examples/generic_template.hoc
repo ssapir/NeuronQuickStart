@@ -1,0 +1,110 @@
+// Adjusted from Etay Hay model
+
+begintemplate Celltemplate
+  public init, delete_axon
+  public soma, dend, apic, axon, spine
+  public all, somatic, apical, axonal, basal, nSecSoma, nSecApical, nSecBasal, nSecAxonal, nSecAxonalOrig, nSecAll, Spines
+  objref SecSyn, this
+  objref all, apical, basal, somatic, axonal, Spines, this ,segCounts
+
+//$s1 - morphology file name
+proc init() {localobj nl,import
+    // generic initiation of sections list and deletion
+	all = new SectionList()
+	somatic = new SectionList()
+	basal = new SectionList()
+	apical = new SectionList()
+	axonal = new SectionList()
+	forall delete_section()
+
+ 	StepDist = 60 // Almost no spines in human cells within the first 60 um
+ 				  // from soma - see Benavides-Piccione 2013
+
+    // generic loading and importing of current template in neuron
+    nl = new Import3d_Neurolucida3()
+    nl.quiet = 1
+    nl.input($s1)
+    import = new Import3d_GUI(nl, 0)
+    import.instantiate(this)
+
+    geom_nseg()
+
+    // validate diam
+	forsec this.all {
+		if(diam == 0){
+	        diam =  1
+	        printf("Error : Morphology problem with section [%s] 0 diam \n", secname())
+		}
+    }
+}
+
+// create basic needed objects
+create soma[1], dend[1], apic[1], axon[1], spine[1]
+
+strdef stmp,distfunc,mech
+
+proc geom_nseg() {local chunkSize, nSec, L1, L2, D1, D2, nSeg1, nSeg2
+    chunkSize = 40  // default size unless parameter was given (optional)
+    if( numarg() > 0 ) {
+        chunkSize = $1
+    }
+
+    // generic code - calculating n seg with known formula
+    soma area(.5) // make sure diam reflects 3d points
+    nSec = 0
+    forsec all {
+      nseg = 1 + 2*int(L/chunkSize)
+      //segCounts.x[nSec] = nseg // todo where is it inited?
+      nSec = nSec + 1
+    }
+
+    nSecAll = nSec
+    nSec = 0
+    forsec somatic { nSec = nSec + 1}
+    nSecSoma	= 	nSec
+    nSec = 0
+    forsec apical { nSec = nSec + 1}
+    nSecApical= 	nSec
+    nSec = 0
+    forsec basal { nSec = nSec + 1}
+    nSecBasal	= 	nSec
+    nSec = 0
+    forsec axonal { nSec = nSec + 1}
+    nSecAxonalOrig = nSecAxonal	= 	nSec
+
+    // update counts per section with seg
+    segCounts = new Vector()
+    segCounts.resize(nSecAll)
+    nSec=0
+    forsec all {
+        segCounts.x[nSec] = nseg
+        nSec = nSec+1
+    }
+}
+
+// deleting axon, keeping only first 60 micrometers
+proc delete_axon(){
+    forsec axonal{delete_section()}
+    create axon[2]
+    access axon[0]{
+      L= 30
+      diam = 1
+      nseg = 1+2*int(L/40)
+      all.append()
+      axonal.append()
+    }
+    access axon[1]{
+      L= 30
+      diam = 1
+      nseg = 1+2*int(L/40)
+      all.append()
+      axonal.append()
+    }
+
+  nSecAxonal = 2
+  connect axon(0), soma(0.5)
+  connect axon[1](0), axon[0](1)
+  access soma
+}
+
+endtemplate Celltemplate
