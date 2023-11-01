@@ -9,7 +9,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Ellipse, Circle, Polygon
 from matplotlib_scalebar.scalebar import ScaleBar
 
-from neuron_model import NeuronCell
+from utils.neuron_model import NeuronCell
 
 
 def generate_cylindrical_points(start, end, start_radius, end_radius,

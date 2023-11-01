@@ -248,8 +248,8 @@ class NeuronCell:
         self.mods_dll = None
         if os.path.isfile(os.path.join(model_path, "x86_64", "libnrnmech.so")):
             self.mods_dll = os.path.join(model_path, "x86_64", "libnrnmech.so")
-        elif os.path.isfile(os.path.join(model_path, "nrnmech.dll")):
-            self.mods_dll = os.path.join(model_path, "nrnmech.dll")
+        elif os.path.isfile(os.path.join(model_path, "../nrnmech.dll")):
+            self.mods_dll = os.path.join(model_path, "../nrnmech.dll")
         else:
             logging.error("Missing dll/so mechanisms")
         if "CaDynamics_E2" not in dir(h) and self.mods_dll is not None:

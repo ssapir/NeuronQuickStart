@@ -4,9 +4,8 @@ import sys
 
 from matplotlib import pyplot as plt
 
-from factory_neuron_model import FactoryNeuronCell, Skeleton
-from neuron_model import NeuronCell
-from neuron_viewer import plot_morphology_from_cell
+from utils.neuron_model import NeuronCell
+from utils.neuron_viewer import plot_morphology_from_cell
 
 
 def use_neurom_visualization(curr_path):
