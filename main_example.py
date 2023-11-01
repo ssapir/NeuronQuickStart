@@ -2,6 +2,7 @@ import os
 import logging
 import sys
 
+import numpy as np
 from matplotlib import pyplot as plt
 
 from utils.neuron_model import NeuronCell
@@ -25,6 +26,41 @@ def use_neurom_visualization(curr_path):
     mpl_n.plot_dendrogram(nrn)  # dendrogram plot
     plt.tight_layout()
     plt.show()
+
+
+def simulate(cell: NeuronCell, dt=0.1, delay_ms=200, dur_from_delay_ms=400, initial_voltage=-70):
+    def get_recording_vectors():
+        rec_time = h.Vector()
+        rec_time.record(h._ref_t)
+        # record soma voltage
+        rec_voltage_soma = h.Vector()
+        rec_voltage_soma.record(cell.soma(0.5)._ref_v)
+        rec_voltage_all_segments, all_segments = [], []
+        for indsec, section in enumerate(cell1.apical_sections + cell.basal_sections):
+            for indseg, segment in enumerate(section):
+                rec_voltage_seg = h.Vector()
+                rec_voltage_seg.record(segment._ref_v)
+                rec_voltage_all_segments.append(rec_voltage_seg)
+                all_segments.append(segment)  # make sure we know what was recorded (keep order)
+        return dict(time=rec_time, soma_v=rec_voltage_soma, recorded_segments=all_segments,
+                    segments_v=rec_voltage_all_segments)
+
+    from neuron import h
+    from neuron.units import mV, ms
+
+    h.dt = dt
+    recorded_data = get_recording_vectors()
+    h.finitialize(initial_voltage * mV)
+    h.continuerun((delay_ms + dur_from_delay_ms) * ms)  # todo before interp this is 70 points for small dt
+    for k, v in recorded_data.items():
+        if k == "recorded_segments":
+            recorded_data[k] = v
+        else:
+            if isinstance(v, list):
+                recorded_data[k] = [np.array(iv.to_python()) for iv in v]
+            else:
+                recorded_data[k] = np.array(v.to_python())
+    return recorded_data
 
 
 def compare_swc_without_header(swc_str1: str, swc_str2: str, ignore_ids=True):
@@ -57,7 +93,7 @@ if __name__ == '__main__':
     use_neurom = True  # if installed (pip install neurom)
     curr_path = os.path.join("L5PC_Mouse_model_example", "morphologies", "cell1.swc")  # converted. Can also the asc
     cell1 = NeuronCell(use_cvode=True,
-                       morphologyFilename=os.path.join("morphologies", "cell1.swc"),
+                       morphologyFilename=os.path.join("morphologies", "cell1.ASC"),
                        model_path=os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])),
                                                "L5PC_Mouse_model_example"))
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -67,6 +103,21 @@ if __name__ == '__main__':
     plt.show()
 
     # add clamp and play and plot
+    cell1.init_passive_params()
+    cell1.change_passive_params(CM=1.2, RA=200, RM=22000.0, E_PAS=-70, SPINE_START=60, F_factor=1.9)
+    delay_ms = 50
+    dur_from_delay_ms = 200
+    cell1.add_alpha_current_stim(seg=cell1.soma(0.5), delay_ms=delay_ms, dur_from_delay_ms=dur_from_delay_ms)
+    recorded_data_traces = simulate(cell=cell1, dt=0.1, initial_voltage=-70,
+                                    delay_ms=delay_ms, dur_from_delay_ms=dur_from_delay_ms)
+    plt.figure()
+    plt.plot(recorded_data_traces["time"], recorded_data_traces["soma_v"], "--k")
+    for seg, seg_v in zip(recorded_data_traces["recorded_segments"], recorded_data_traces["segments_v"]):
+        plt.plot(recorded_data_traces["time"], recorded_data_traces["soma_v"],
+                 label="{0}-{1}".format(seg.sec.name().split(".")[1], seg.x))
+    plt.tight_layout()
+    # plt.legend()
+    plt.show()
 
     if use_neurom:
         use_neurom_visualization(curr_path)

@@ -54,7 +54,7 @@ class NeuronCell:
     def __init__(self,
                  is_init_trunk_oblique=False,
                  is_delete_axon=False,
-                 use_cvode=False, model_path="./L5PC_Mouse_model_example",
+                 use_cvode=True, model_path="./L5PC_Mouse_model_example",
                  templateName='L5PCtemplate',
                  name="L5PC_Mouse_model_example",
                  morphologyFilename=os.path.join("morphologies", "cell1.ASC"),
@@ -169,7 +169,6 @@ class NeuronCell:
     def init_passive_params(self):
         for sec in self.all:
             sec.insert('pas')
-            print(sec)
             for seg in sec:
                 seg.pas.e = 0
 
@@ -248,10 +247,10 @@ class NeuronCell:
         self.mods_dll = None
         if os.path.isfile(os.path.join(model_path, "x86_64", "libnrnmech.so")):
             self.mods_dll = os.path.join(model_path, "x86_64", "libnrnmech.so")
-        elif os.path.isfile(os.path.join(model_path, "../nrnmech.dll")):
-            self.mods_dll = os.path.join(model_path, "../nrnmech.dll")
+        elif os.path.isfile(os.path.join(model_path, "./nrnmech.dll")):
+            self.mods_dll = os.path.join(model_path, "./nrnmech.dll")
         else:
-            logging.error("Missing dll/so mechanisms")
+            logging.error(f"Missing dll/so mechanisms in {model_path}")
         if "CaDynamics_E2" not in dir(h) and self.mods_dll is not None:
             h.nrn_load_dll(self.mods_dll)
             logging.info(f"Loaded {self.mods_dll}")
