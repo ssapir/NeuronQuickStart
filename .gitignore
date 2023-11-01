@@ -1,10 +1,26 @@
+# added
+*/x86_64/
+*.png
+*.jpg
+
+# C & compilations extensions
+*.so
+*.o
+*.c
+*.dll
+mods/*.dll
+mods/*.c
+mods/*.so
+mods/*.o
+*/mods/*.dll
+*/mods/*.c
+*/mods/*.so
+*/mods/*.o
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python

@@ -18,3 +18,7 @@ Contains:
   * main_example.py - show common functionality in current repository
   * neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
   * factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
+
+Requirements:
+* requirements.txt
+* Install neuron separately: https://www.neuron.yale.edu/neuron/download 
