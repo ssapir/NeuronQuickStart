@@ -1,8 +1,11 @@
 # NeuronQuickStart
 A wrapper to common functionality to work with Neuron package (https://www.neuron.yale.edu/neuron/)
 
-* generic_template.hoc - common/basic hoc file for swc/asc neuron loading 
-  (NeuronCell complete additional functionality converted from hoc to python code)
+* Python files:
+  * main_example.py - show common functionality in current repository
+  * utils/neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
+  * utils/factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
+  * utils/neuron_viewer.py - plot cell (with extensions of markers, electrodes and scalebars)
 * h01_Human_swc_example - contains downloaded examples from h01 data
 * L5PC_Mouse_model_example - commonly used neuron model (Etay Hay, 2011). 
 Contains:
@@ -14,10 +17,8 @@ Contains:
     SWC - binary description.
     Can be viewed with the following tool: https://neuroinformatics.nl/HBP/morphology-viewer/
   * hoc files - templates used when loading the model (can be a single generic template instead)
-* Python files:
-  * main_example.py - show common functionality in current repository
-  * neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
-  * factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
+     * generic_template.hoc - common/basic hoc file for swc/asc neuron loading 
+  (NeuronCell complete additional functionality converted from hoc to python code)
 
 Requirements:
 * requirements.txt
