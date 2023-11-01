@@ -1,10 +1,25 @@
 # Based on: https://github.com/seung-lab/cloud-volume/wiki/Advanced-Topic%3A-Skeletons
-# SWC format: http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
 import datetime
+import enum
 from collections import defaultdict
 import re
 
 import numpy as np
+
+
+class SwcSectionType(enum.Enum):
+    """Note: undefined is not read by morphio & neurom (parsing error)
+    From: https://swc-specification.readthedocs.io/en/latest/swc.html
+    """
+    undefined = 0
+    soma = 1
+    axon = 2
+    basal_dendrite = 3
+    apical_dendrite = 4
+    custom = 5
+
+    def __str__(self):
+        return str(self.value)
 
 
 class Skeleton:
@@ -27,7 +42,9 @@ class Skeleton:
         self.vertices = np.array(vertices, dtype=np.float32)
         self.edges = np.array(edges, dtype=np.uint32)
         self.radii = np.array(radii, dtype=np.float32)
-        self.vertex_types = np.array(vertex_types, dtype=np.uint8)
+        # patch for an error-  will crush with undefined type
+        vertex_types = [v if SwcSectionType(v) != SwcSectionType.undefined else SwcSectionType.apical_dendrite for v in vertex_types]
+        self.vertex_types = np.array(vertex_types, dtype=SwcSectionType)
         self.transform_matrix = np.copy(Skeleton.IDENTITY) if transform_matrix is None \
             else np.array(transform_matrix).reshape((3, 4))
 
