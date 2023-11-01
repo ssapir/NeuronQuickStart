@@ -1,13 +1,15 @@
 # NeuronQuickStart
 A wrapper to common functionality to work with Neuron package (https://www.neuron.yale.edu/neuron/)
 
-Installation:
+## Overview
+### Installation:
 * pip install -r requirements.txt
 * Manually install neuron separately: https://www.neuron.yale.edu/neuron/download 
 
-Usage example: look (& run) main_example.py for a short overview of functionality
+### Usage example: 
+look (& run) main_example.py for a short overview of functionality
 
-Repository structure:
+## Repository structure:
 * Python files:
   * main_example.py - show functionality in current repository
   * utils/neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
