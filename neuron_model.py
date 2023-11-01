@@ -228,7 +228,16 @@ class NeuronCell:
             # delattr(h, templateName)
         if morphologyFilename.startswith("/"):
             morphologyFilename = morphologyFilename[1:]
+
+        if morphologyFilename.endswith(".swc"):  # patch. Can load swc but for some reason it fails now
+            # Import2 = h.Import3d_SWC_read()
+            # # Import2.input(morphologyFilename)  # should work but template fails so just convert
+            from morph_tool import convert
+            convert(os.path.join(model_path, morphologyFilename),
+                    os.path.join(model_path, morphologyFilename.replace(".swc", "_converted.ASC")))
+            morphologyFilename = morphologyFilename.replace(".swc", "_converted.ASC")
         h.load_file(os.path.join(model_path + "/", biophysicalModelTemplateFilename))
+
         logging.info("Loading {0}".format(os.path.join(model_path, morphologyFilename)))
         cell_temp_func = getattr(h, templateName)  # todo can be automatic in the template as cell?
         self.L5PC = cell_temp_func(os.path.join(model_path, morphologyFilename))
