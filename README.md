@@ -3,11 +3,22 @@ A wrapper to common functionality to work with Neuron package (https://www.neuro
 
 ## Overview
 ### Installation:
+* git clone <current repository path>
+* conda create --name  neuron  python=3.8
+* conda activate neuron
 * pip install -r requirements.txt
-* Manually install neuron separately: https://www.neuron.yale.edu/neuron/download 
+* pip install neuron==8.0.2  # in linux. maybe different in windows
+
+* For windows, may requrire to manually install neuron separately: https://www.neuron.yale.edu/neuron/download 
+
+### Compile mod (mechanism) files:
+* cd L5PC_Mouse_model_example
+* nrnivmodl mods  # Important: after conda activate neuron!
 
 ### Usage example: 
-look (& run) main_example.py for a short overview of functionality
+python main_example.py # or via IDE run the python code
+
+* main_example.py for a short overview of functionality
 
 ## Repository structure:
 * Python files:
