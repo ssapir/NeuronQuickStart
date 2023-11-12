@@ -90,7 +90,7 @@ class FactoryNeuronCell:
 
 
     @staticmethod
-    def write_cell_builder_hoc_to_swc(secs: list):
+    def write_cell_builder_hoc_to_swc(secs: list, remap_types={}):
         """Convert sections list (created via Cell Builder for example) to valid swc file to test format
         Note: should contain some (as 1 section!)
         :param secs:
@@ -125,10 +125,22 @@ class FactoryNeuronCell:
         swc_str += res
         for sec in secs_no_soma:
             p_ind = map_parent_to_id[sec.parentseg().sec.name()][1]
+            sec_name = sec.name()
+            if len(remap_types.keys()) > 0:
+                if sec.name() in remap_types.keys():
+                    sec_name = remap_types[sec.name()]
+                    for c in sec.children():
+                        if "dend" in sec.name() and "apic" in remap_types[sec.name()]:
+                            remap_types[c.name()] = c.name().replace("dend", "apic")
+                        elif "apic" in sec.name() and "dend" in remap_types[sec.name()]:
+                            remap_types[c.name()] = c.name().replace("apic", "dend")
+                        else:
+                            print(f"Error lack mapping: {sec.name()} => {remap_types[sec.name()]}")
+                            return
             res, offset = sec_to_str(sec, offset=offset, p_ind=p_ind,
-                                     curr_type=SwcSectionType.apical_dendrite if "apic" in sec.name() else
-                                     SwcSectionType.basal_dendrite if "dend" in sec.name() else
-                                     SwcSectionType.axon if "axon" in sec.name() else
+                                     curr_type=SwcSectionType.apical_dendrite if "apic" in sec_name else
+                                     SwcSectionType.basal_dendrite if "dend" in sec_name else
+                                     SwcSectionType.axon if "axon" in sec_name else
                                      SwcSectionType.basal_dendrite)
             swc_str += res
         return swc_str
