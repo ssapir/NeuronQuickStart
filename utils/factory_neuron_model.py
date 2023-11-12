@@ -99,16 +99,16 @@ class FactoryNeuronCell:
         from neuron import h
         def sec_to_str(c_sec, offset, p_ind, curr_type: SwcSectionType):
             res = ""
-            map_parent_to_id[c_sec.name()] = (offset + 1, offset + 1 + int(h.n3d(c_sec)) - 1)
-            assert c_sec.n3d() == int(h.n3d(sec=c_sec))
-            for i in range(c_sec.n3d()):
+            n_points = c_sec.n3d()
+            map_parent_to_id[c_sec.name()] = (offset + 1, offset + 1 + n_points - 1)
+            for i in range(n_points):
                 # index     type         X            Y            Z       radius       parent
                 res += "{n} {T} {x:0.6f} {y:0.6f} {z:0.6f} {R:0.6f} {P} # {N}{PN}\n".format(
                     n=(i + 1 + offset), T=int(curr_type.value), N=c_sec.name(),
                     x=h.x3d(i, sec=c_sec), y=h.y3d(i, sec=c_sec), z=h.z3d(i, sec=c_sec), R=h.diam3d(i, sec=c_sec)/2,
                     P=p_ind if i == 0 else (i + offset),
                     PN=f" son of {c_sec.parentseg().sec.name()}" if p_ind != -1 else "")
-            return res, offset + int(h.n3d(c_sec))
+            return res, offset + n_points
 
         swc_str = """# swc file format
 # Labels: {labels}
