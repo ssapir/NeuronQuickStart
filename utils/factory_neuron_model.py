@@ -97,17 +97,19 @@ class FactoryNeuronCell:
         :return: swc_str
         """
         from neuron import h
-        def sec_to_str(c_sec, offset, p_ind, curr_type: SwcSectionType):
+        def sec_to_str(c_sec, offset, p_ind, curr_type: SwcSectionType, remap_types):
+            def get_n(curr):
+                return curr if curr not in remap_types else remap_types[curr]
             res = ""
             n_points = c_sec.n3d()
             map_parent_to_id[c_sec.name()] = (offset + 1, offset + 1 + n_points - 1)
             for i in range(n_points):
                 # index     type         X            Y            Z       radius       parent
                 res += "{n} {T} {x:0.6f} {y:0.6f} {z:0.6f} {R:0.6f} {P} # {N}{PN}\n".format(
-                    n=(i + 1 + offset), T=int(curr_type.value), N=c_sec.name(),
+                    n=(i + 1 + offset), T=int(curr_type.value), N=get_n(c_sec.name()),
                     x=h.x3d(i, sec=c_sec), y=h.y3d(i, sec=c_sec), z=h.z3d(i, sec=c_sec), R=h.diam3d(i, sec=c_sec)/2,
                     P=p_ind if i == 0 else (i + offset),
-                    PN=f" son of {c_sec.parentseg().sec.name()}" if p_ind != -1 else "")
+                    PN=f" son of {get_n(c_sec.parentseg().sec.name())}" if p_ind != -1 else "")
             return res, offset + n_points
 
         swc_str = """# swc file format
@@ -121,7 +123,8 @@ class FactoryNeuronCell:
         # add soma
         map_parent_to_id = {"soma": (0, int(h.n3d(somas[0])) - 1)}  # name: (min, max)
         offset = 0
-        res, offset = sec_to_str(somas[0], offset=offset, p_ind=-1, curr_type=SwcSectionType.soma)
+        res, offset = sec_to_str(somas[0], offset=offset, p_ind=-1, curr_type=SwcSectionType.soma,
+                                 remap_types=remap_types)
         swc_str += res
         for sec in secs_no_soma:
             p_ind = map_parent_to_id[sec.parentseg().sec.name()][1]
@@ -137,7 +140,7 @@ class FactoryNeuronCell:
                         else:
                             print(f"Error lack mapping: {sec.name()} => {remap_types[sec.name()]}")
                             return
-            res, offset = sec_to_str(sec, offset=offset, p_ind=p_ind,
+            res, offset = sec_to_str(sec, offset=offset, p_ind=p_ind, remap_types=remap_types,
                                      curr_type=SwcSectionType.apical_dendrite if "apic" in sec_name else
                                      SwcSectionType.basal_dendrite if "dend" in sec_name else
                                      SwcSectionType.axon if "axon" in sec_name else
