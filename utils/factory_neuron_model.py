@@ -16,7 +16,9 @@ class SwcSectionType(enum.Enum):
     axon = 2
     basal_dendrite = 3
     apical_dendrite = 4
-    custom = 5
+    point = 5
+    end_point = 6
+    # custom = 5
 
     def __str__(self):
         return str(self.value)
@@ -85,6 +87,51 @@ class FactoryNeuronCell:
             FactoryNeuronCell.__generate_skeleton_components_from_swc(lines)
 
         return Skeleton(vertices, edges, radii, vertex_types, transform_matrix=transform_matrix)
+
+
+    @staticmethod
+    def write_cell_builder_hoc_to_swc(secs: list):
+        """Convert sections list (created via Cell Builder for example) to valid swc file to test format
+        Note: should contain some (as 1 section!)
+        :param secs:
+        :return: swc_str
+        """
+        from neuron import h
+        def sec_to_str(c_sec, offset, p_ind, curr_type: SwcSectionType):
+            res = ""
+            map_parent_to_id[c_sec.name()] = (offset + 1, offset + 1 + int(h.n3d(c_sec)) - 1)
+            assert c_sec.n3d() == int(h.n3d(sec=c_sec))
+            for i in range(c_sec.n3d()):
+                # index     type         X            Y            Z       radius       parent
+                res += "{n} {T} {x:0.6f} {y:0.6f} {z:0.6f} {R:0.6f} {P} # {N}{PN}\n".format(
+                    n=(i + 1 + offset), T=int(curr_type.value), N=c_sec.name(),
+                    x=h.x3d(i, sec=c_sec), y=h.y3d(i, sec=c_sec), z=h.z3d(i, sec=c_sec), R=h.diam3d(i, sec=c_sec)/2,
+                    P=p_ind if i == 0 else (i + offset),
+                    PN=f" son of {c_sec.parentseg().sec.name()}" if p_ind != -1 else "")
+            return res, offset + int(h.n3d(c_sec))
+
+        swc_str = """# swc file format
+# Labels: {labels}
+""".format(labels=" ,".join([f"{v.name} - {v.value}" for v in SwcSectionType]))
+        somas = [s for s in secs if "soma" in s.name()]
+        secs_no_soma = [s for s in secs if "soma" not in s.name()]
+        if len(somas) != 1:
+            print("Error. not single soma, ", somas)
+            return
+        # add soma
+        map_parent_to_id = {"soma": (0, int(h.n3d(somas[0])) - 1)}  # name: (min, max)
+        offset = 0
+        res, offset = sec_to_str(somas[0], offset=offset, p_ind=-1, curr_type=SwcSectionType.soma)
+        swc_str += res
+        for sec in secs_no_soma:
+            p_ind = map_parent_to_id[sec.parentseg().sec.name()][1]
+            res, offset = sec_to_str(sec, offset=offset, p_ind=p_ind,
+                                     curr_type=SwcSectionType.apical_dendrite if "apic" in sec.name() else
+                                     SwcSectionType.basal_dendrite if "dend" in sec.name() else
+                                     SwcSectionType.axon if "axon" in sec.name() else
+                                     SwcSectionType.basal_dendrite)
+            swc_str += res
+        return swc_str
 
     @staticmethod
     def skeleton_to_swc(skeleton: Skeleton, contributors="", version=""):
