@@ -8,7 +8,7 @@ begintemplate Celltemplate
   objref all, apical, basal, somatic, axonal, Spines, this ,segCounts
 
 //$s1 - morphology file name
-proc init() {localobj nl,import
+proc init() {localobj nl,import , str,strObj
     // generic initiation of sections list and deletion
 	all = new SectionList()
 	somatic = new SectionList()
@@ -21,12 +21,20 @@ proc init() {localobj nl,import
  				  // from soma - see Benavides-Piccione 2013
 
     // generic loading and importing of current template in neuron
-    nl = new Import3d_Neurolucida3()
+    strObj  =  new StringFunctions()
+    str     =  new String()
+    if (strObj.substr($s1, ".swc") > 0) {
+    nl = new Import3d_SWC_read()
     nl.quiet = 1
+    } else {
+    nl = new Import3d_Neurolucida3()
+    }
     nl.input($s1)
+    if (strObj.substr($s1, ".swc") > 0) {
+    } else {
     import = new Import3d_GUI(nl, 0)
     import.instantiate(this)
-
+    }
     geom_nseg()
 
     // validate diam
