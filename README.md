@@ -1,24 +1,42 @@
 # NeuronQuickStart
 A wrapper to common functionality to work with Neuron package (https://www.neuron.yale.edu/neuron/)
 
-* generic_template.hoc - common/basic hoc file for swc/asc neuron loading 
-  (NeuronCell complete additional functionality converted from hoc to python code)
-* h01_Human_swc_example - contains downloaded examples from h01 data
-* L5PC_Mouse_model_example - commonly used neuron model (Etay Hay, 2011). 
-Contains:
-  * mods - folder with needed mechanisms (mod) files. 
-    Compile with: "nrnivmodl mods" (mods is the mechanisms' folder name). 
-    Will create output file within the folder you run the script from.
-  * morphologies - *.ASC or *.SWC files with morphology description.
-    ASC - ascii (textual) description.
-    SWC - binary description.
-    Can be viewed with the following tool: https://neuroinformatics.nl/HBP/morphology-viewer/
-  * hoc files - templates used when loading the model (can be a single generic template instead)
-* Python files:
-  * main_example.py - show common functionality in current repository
-  * neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
-  * factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
+## Overview
+### Installation:
+* git clone <current repository path>
+* conda create --name  neuron  python=3.8
+* conda activate neuron
+* pip install -r requirements.txt
+* pip install neuron==8.0.2  # in linux. maybe different in windows
 
-Requirements:
-* requirements.txt
-* Install neuron separately: https://www.neuron.yale.edu/neuron/download 
+* For windows, may requrire to manually install neuron separately: https://www.neuron.yale.edu/neuron/download 
+
+### Compile mod (mechanism) files:
+* cd L5PC_Mouse_model_example
+* nrnivmodl mods  # Important: after conda activate neuron!
+
+### Usage example: 
+python main_example.py # or via IDE run the python code
+
+* main_example.py for a short overview of functionality
+
+## Repository structure:
+* Python files:
+  * main_example.py - show functionality in current repository
+  * utils/neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
+  * utils/factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
+  * utils/neuron_viewer.py - plot cell (with extensions of markers, electrodes and scalebars)
+* Neuron models:
+  * h01_Human_swc_example - contains downloaded examples from h01 data
+  * L5PC_Mouse_model_example - commonly used neuron model (Etay Hay, 2011). 
+  Contains:
+    * mods - folder with needed mechanisms (mod) files. 
+      Compile with: "nrnivmodl mods" (mods is the mechanisms' folder name). 
+      Will create output file within the folder you run the script from.
+    * morphologies - *.ASC or *.SWC files with morphology description.
+      ASC - ascii (textual) description.
+      SWC - binary description.
+      Can be viewed with the following tool: https://neuroinformatics.nl/HBP/morphology-viewer/
+    * hoc files - templates used when loading the model (can be a single generic template instead)
+       * generic_template.hoc - common/basic hoc file for swc/asc neuron loading 
+    (NeuronCell complete additional functionality converted from hoc to python code)
