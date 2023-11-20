@@ -10,28 +10,25 @@ class NeuronCell:
     """
     @property
     def soma(self):
-        soma_sections = [self.L5PC.soma[x] for x in range(len(self.L5PC.soma))]
+        soma_sections = [curr for curr in self.L5PC.somatic]
         assert(len(soma_sections) == 1)
         return soma_sections[0]
 
     @property
     def all(self):
-        return self.basal_sections + self.apical_sections + [self.soma] + self.axonal_sections
+        return self.basal_sections + [self.soma] + self.axonal_sections + self.apical_sections
 
     @property
     def basal_sections(self):
-        return [self.L5PC.dend[x] for x in range(len(self.L5PC.dend))
-                if self.L5PC.dend[x].name() not in self.deleted_secs]
+        return [curr for curr in self.L5PC.basal if curr.name() not in self.deleted_secs]
 
     @property
-    def apical_sections(self):
-        return [self.L5PC.apic[x] for x in range(len(self.L5PC.apic))
-                if self.L5PC.apic[x].name() not in self.deleted_secs]
+    def apical_sections(self):  # todo
+        return [curr for curr in self.L5PC.apical if curr.name() not in self.deleted_secs]
 
     @property
     def axonal_sections(self):
-        return [self.L5PC.axon[x] for x in range(len(self.L5PC.axon))
-                if self.L5PC.axon[x].name() not in self.deleted_secs]
+        return [curr for curr in self.L5PC.axonal if curr.name() not in self.deleted_secs]
 
     @property
     def oblique_sections(self):
@@ -54,6 +51,7 @@ class NeuronCell:
     def __init__(self,
                  is_init_trunk_oblique=False,
                  is_delete_axon=False,
+                 convert_to_asc=True,  # fix soma errors (section was deleted) during conversion from swc
                  use_cvode=True, model_path="./L5PC_Mouse_model_example",
                  templateName='L5PCtemplate',
                  name="L5PC_Mouse_model_example",
@@ -80,7 +78,7 @@ class NeuronCell:
 
         morphologyFilename = self.__load_morphology(biophysicalModelFilename,
                                                     biophysicalModelTemplateFilename, model_path,
-                                                    morphologyFilename, templateName)
+                                                    morphologyFilename, templateName, convert_to_asc=convert_to_asc)
         self.name = name
 
         if is_delete_axon:  # can cause internal neuron failure in some cases without deletion
@@ -213,24 +211,24 @@ class NeuronCell:
         return h.distance(to_segment.x, sec=to_segment.sec)
 
     def __load_morphology(self, biophysicalModelFilename, biophysicalModelTemplateFilename, model_path,
-                          morphologyFilename, templateName):
-        if biophysicalModelFilename is not None:
-            if os.path.isfile(os.path.join(model_path, biophysicalModelFilename)):
-                h.load_file(os.path.join(model_path + "/", biophysicalModelFilename))
-            else:
-                logging.error("Missing biophysics file {0}".format(os.path.join(model_path, biophysicalModelFilename)))
-        if not os.path.isfile(os.path.join(model_path, biophysicalModelTemplateFilename)):
-            raise Exception(
-                "Missing model template {0}".format(os.path.join(model_path, biophysicalModelTemplateFilename)))
-        if hasattr(h, templateName):
-            return
+                          morphologyFilename, templateName, convert_to_asc):
+        if not hasattr(h, templateName):
+            if biophysicalModelFilename is not None:
+                if os.path.isfile(os.path.join(model_path, biophysicalModelFilename)):
+                    h.load_file(os.path.join(model_path + "/", biophysicalModelFilename))
+                else:
+                    logging.error("Missing biophysics file {0}".format(os.path.join(model_path, biophysicalModelFilename)))
+            if not os.path.isfile(os.path.join(model_path, biophysicalModelTemplateFilename)):
+                raise Exception(
+                    "Missing model template {0}".format(os.path.join(model_path, biophysicalModelTemplateFilename)))
+        else:
+            print(f"Template {templateName} already loaded to h")
+
             # delattr(h, templateName)
         if morphologyFilename.startswith("/"):
             morphologyFilename = morphologyFilename[1:]
 
-        if morphologyFilename.endswith(".swc"):  # patch. Can load swc but for some reason it fails now
-            # Import2 = h.Import3d_SWC_read()
-            # # Import2.input(morphologyFilename)  # should work but template fails so just convert
+        if morphologyFilename.endswith(".swc") and convert_to_asc:
             from morph_tool import convert
             convert(os.path.join(model_path, morphologyFilename),
                     os.path.join(model_path, morphologyFilename.replace(".swc", "_converted.ASC")))

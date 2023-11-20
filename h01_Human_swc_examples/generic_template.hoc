@@ -2,14 +2,15 @@
 
 begintemplate Celltemplate
   public init, delete_axon
-  public soma, dend, apic, axon, spine
-  public all, somatic, apical, axonal, basal, nSecSoma, nSecApical, nSecBasal, nSecAxonal, nSecAxonalOrig, nSecAll, Spines
+  //public soma, dend, apic, axon, spine  // dont make this public. better to use the lists below (they dont crash when empty)
+  public all, somatic, apical, axonal, basal, Spines
   objref SecSyn, this
-  objref all, apical, basal, somatic, axonal, Spines, this ,segCounts
+  objref all, apical, basal, somatic, axonal, Spines, this
 
 //$s1 - morphology file name
 proc init() {localobj nl,import , str,strObj
     // generic initiation of sections list and deletion
+    // these are appended in the import below
 	all = new SectionList()
 	somatic = new SectionList()
 	basal = new SectionList()
@@ -62,32 +63,7 @@ proc geom_nseg() {local chunkSize, nSec, L1, L2, D1, D2, nSeg1, nSeg2
     nSec = 0
     forsec all {
       nseg = 1 + 2*int(L/chunkSize)
-      //segCounts.x[nSec] = nseg // todo where is it inited?
-      nSec = nSec + 1
-    }
-
-    nSecAll = nSec
-    nSec = 0
-    forsec somatic { nSec = nSec + 1}
-    nSecSoma	= 	nSec
-    nSec = 0
-    forsec apical { nSec = nSec + 1}
-    nSecApical= 	nSec
-    nSec = 0
-    forsec basal { nSec = nSec + 1}
-    nSecBasal	= 	nSec
-    nSec = 0
-    forsec axonal { nSec = nSec + 1}
-    nSecAxonalOrig = nSecAxonal	= 	nSec
-
-    // update counts per section with seg
-    segCounts = new Vector()
-    segCounts.resize(nSecAll)
-    nSec=0
-    forsec all {
-        segCounts.x[nSec] = nseg
-        nSec = nSec+1
-    }
+   }
 }
 
 // deleting axon, keeping only first 60 micrometers
