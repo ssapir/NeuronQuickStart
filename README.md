@@ -10,6 +10,7 @@ A wrapper to common functionality to work with Neuron package (https://www.neuro
 * pip install neuron==8.0.2  # in linux. maybe different in windows
 
 * For windows, may requrire to manually install neuron separately: https://www.neuron.yale.edu/neuron/download 
+* Can updgrade for newer python & neuron version if needed (not validated against the code here)
 
 ### Compile mod (mechanism) files:
 * cd L5PC_Mouse_model_example
