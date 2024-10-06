@@ -23,7 +23,7 @@ python main_example.py # or via IDE run the python code
 
 ## Repository structure:
 * Python files:
-  * main_example.py - show functionality in current repository
+  * main_example.py & main_example.ipynb- show functionality in current repository
   * utils/neuron_model.py - NeuronCell wraps neuron h loading (common functionality and replacement for some hoc code) 
   * utils/factory_neuron_model.py - wrap & refactor converters (swc, asc, NeuronCell)
   * utils/neuron_viewer.py - plot cell (with extensions of markers, electrodes and scalebars)
@@ -34,10 +34,11 @@ python main_example.py # or via IDE run the python code
     * mods - folder with needed mechanisms (mod) files. 
       Compile with: "nrnivmodl mods" (mods is the mechanisms' folder name). 
       Will create output file within the folder you run the script from.
-    * morphologies - *.ASC or *.SWC files with morphology description.
+    * morphologies - *.ASC or *.SWC ascii (textual) description files with morphology description.
       ASC - ascii (textual) description.
-      SWC - binary description.
+      SWC - table-like structure with columns for: (id, type, x, y , z, diam, parent-id).
       Can be viewed with the following tool: https://neuroinformatics.nl/HBP/morphology-viewer/
     * hoc files - templates used when loading the model (can be a single generic template instead)
-       * generic_template.hoc - common/basic hoc file for swc/asc neuron loading 
+       * generic_template.hoc - common/basic hoc file for swc/asc neuron loading
+       * hoc files can be re-written to use the python API (as in this repository)
     (NeuronCell complete additional functionality converted from hoc to python code)
