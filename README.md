@@ -35,7 +35,7 @@ python main_example.py # or via IDE run the python code
       Compile with: "nrnivmodl mods" (mods is the mechanisms' folder name). 
       Will create output file within the folder you run the script from.
     * morphologies - *.ASC or *.SWC ascii (textual) description files with morphology description.
-      ASC - ascii (textual) description.
+      ASC - tree-like structure.
       SWC - table-like structure with columns for: (id, type, x, y , z, diam, parent-id).
       Can be viewed with the following tool: https://neuroinformatics.nl/HBP/morphology-viewer/
     * hoc files - templates used when loading the model (can be a single generic template instead)
