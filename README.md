@@ -19,8 +19,9 @@ A wrapper to common functionality to work with Neuron package (https://www.neuro
 ### Usage example: 
 python main_example.py # or via IDE run the python code
 
-* main_example.py for a short overview of functionality
-
+* main_example.py / ipynb for a short overview of functionality
+* Neuron's python tutorials: https://nrn.readthedocs.io/en/8.2.6/tutorials/index.html
+  
 ## Repository structure:
 * Python files:
   * main_example.py & main_example.ipynb- show functionality in current repository
